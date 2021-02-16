@@ -1,54 +1,57 @@
-# Working with raw logging and journalctl
+# Working with raw logging from Logstash and journalctl
 
-I have a JVM service using the logstash encoder, it is outputting json formatted messages and they can be observed with
-journalctl, here are some notes on how to better extract desired information from them
+The other day I was troubleshooting an application I contribute to that is used as a Linux startup service managed by systemd. I wanted to find logging items that matched either on their message or on their metadata.
 
-All the logstash encoder messages use `@timestamp` so use grep to filter output from the processe's stdout
-not produced by logging.
+The application is JVM based and as is often the case uses Logstash and Logback to produce logs in a json format to provide metadata in addition to the message passed to the logger.
 
-Then use jq to start looking for the desired data.
+_**So what was my problem, how come I didn't just use the web ui?**_
+
+The system I was working on doesn't have the ELK stack installed so I didn't have the typical and friendly tools to search through my logs. However, I did have access to the host running the application.
+
+First things first. Given that I have access to the host I should be able to access the output from the application. I know that I can use journalctl to observe what the application is writing to standard out. I also know that the tool `jq` can be used to filter and transform json. Using these two command line utilities together I'll show you how to effectively find what you are looking in json formatted logstash output.
+
+## Help 1
+All the logstash encoder messages use `@timestamp`, so use `grep` to filter output from the process's stdout not produced by logging. Then use `jq` to start looking for the desired data.
 
 Here's a quick way to see the raw logging messages since the most recent "boot" of the service
 
 `journalctl --boot=0 -o cat -u foobar.service | grep '@timestamp' | jq -M '.message'`
 
-Now you can start getting at what you want in those messages.
+Now you can start getting at what you want in those messages. Let's find messages with `lizard` or `turtle`.
 
-Let's find messages with password or secret
+`journalctl --boot=0 -o cat -u foobar.servcie | grep '@timestamp' | jq -M '.message' | grep -i 'lizard\|turtle`
 
-`journalctl --boot=0 -o cat -u foobar.servcie | grep '@timestamp' | jq -M '.message' | grep -i 'secret\|password`
+Don't forget that you can filter out repetitive logs with `uniq`.
 
-Don't forget that you can filter out repetitive logs with uniq
-
-`journalctl --boot=0 -o cat -u foobar.servcie | grep '@timestamp' | jq -M '.message' | uniq | grep -i 'secret\|password'`
+`journalctl --boot=0 -o cat -u foobar.servcie | grep '@timestamp' | jq -M '.message' | uniq | grep -i 'lizard\|turtle'`
 
 It's important that uniq goes after jq because each raw message will have unique timestamps and you will defeat the purpose of getting only the unique part of the individual message field
 
-Now since logstash encoding provides other data in addition to just the message let's look at that.
+## Help 2
+What if other fields besides message could contain data about lizards and turtles, how do we find them?
 
-What if other fields besides message could contain secrets, how do we find them?
-
-Assuming that inside the logstash encoding we have a message like I want to get all the json "secret" properties
+Suppose some of the logging messages produced have a json encoded format like the following.
 
 ```
 {
   ...
   "foo": {
-    "secret": "first secret"
+    "lizard": "Reggie 4.0"
     "bar": {
-      "secret": "second secret"
+      "lizard": "Scaly Beast that ate my sandwich"
       }
     }
   }
 }
 ```
 
-Here we use the `(.. | .secret?)` operation with jq, note that secret is just the name of the field I care about. You may have other fields you are interested about.
+Will will use the `(.. | .lizard?)` operation with jq to find any logging output that contains a `lizard` field anywhere in the json hiearchy.
 
-`journalctl --boot=0 -o cat -u foobar.servcie | grep '@timestamp' | jq -M '(.. | .secret?)' | grep -v null`
+`journalctl --boot=0 -o cat -u foobar.servcie | grep '@timestamp' | jq -M '(.. | .lizard?)' | grep -v null`
 
-I'm not yet sure how to avoid jq returning null for all the messages where there wasn't a match.
+The one caveat is I'm not yet sure how to avoid jq returning null for all the messages where there wasn't a match. That's what the trailing `| grep -v null` is for above.
 
 ### References
 [journalctl man page](https://www.commandlinux.com/man-page/man1/journalctl.1.html)
 [jq json query](https://stedolan.github.io/jq/)
+[Logstash](https://www.elastic.co/logstash)
