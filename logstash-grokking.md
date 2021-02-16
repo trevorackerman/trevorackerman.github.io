@@ -1,5 +1,7 @@
 # Working with raw logging from Logstash and journalctl
 
+<br/>
+
 The other day I was troubleshooting an application I contribute to that is used as a Linux startup service managed by systemd. I wanted to find logging items that matched either on their message or on their metadata.
 
 The application is JVM based and as is often the case uses Logstash and Logback to produce logs in a json format to provide metadata in addition to the message passed to the logger.
