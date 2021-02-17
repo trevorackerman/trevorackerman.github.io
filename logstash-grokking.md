@@ -17,6 +17,10 @@ All the logstash encoder messages use `@timestamp`, so use `grep` to filter outp
 
 Here's a quick way to see the raw logging messages since the most recent "boot" of the service
 
+```bash
+`journalctl --boot=0 -o cat -u foobar.service | grep '@timestamp' | jq -M '.message'
+```
+
 `journalctl --boot=0 -o cat -u foobar.service | grep '@timestamp' | jq -M '.message'`
 
 Now you can start getting at what you want in those messages. Let's find messages with `lizard` or `turtle`.
@@ -34,7 +38,7 @@ What if other fields besides message could contain data about lizards and turtle
 
 Suppose some of the logging messages produced have a json encoded format like the following.
 
-```
+```json
 {
   ...
   "foo": {
