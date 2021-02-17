@@ -18,18 +18,20 @@ All the logstash encoder messages use `@timestamp`, so use `grep` to filter outp
 Here's a quick way to see the raw logging messages since the most recent "boot" of the service
 
 ```bash
-`journalctl --boot=0 -o cat -u foobar.service | grep '@timestamp' | jq -M '.message'
+journalctl --boot=0 -o cat -u foobar.service | grep '@timestamp' | jq -M '.message'
 ```
-
-`journalctl --boot=0 -o cat -u foobar.service | grep '@timestamp' | jq -M '.message'`
 
 Now you can start getting at what you want in those messages. Let's find messages with `lizard` or `turtle`.
 
-`journalctl --boot=0 -o cat -u foobar.servcie | grep '@timestamp' | jq -M '.message' | grep -i 'lizard\|turtle`
+```bash
+journalctl --boot=0 -o cat -u foobar.servcie | grep '@timestamp' | jq -M '.message' | grep -i 'lizard\|turtle'
+```
 
 Don't forget that you can filter out repetitive logs with `uniq`.
 
-`journalctl --boot=0 -o cat -u foobar.servcie | grep '@timestamp' | jq -M '.message' | uniq | grep -i 'lizard\|turtle'`
+```bash
+journalctl --boot=0 -o cat -u foobar.servcie | grep '@timestamp' | jq -M '.message' | uniq | grep -i 'lizard\|turtle'
+```
 
 It's important that uniq goes after jq because each raw message will have unique timestamps and you will defeat the purpose of getting only the unique part of the individual message field
 
@@ -40,7 +42,6 @@ Suppose some of the logging messages produced have a json encoded format like th
 
 ```json
 {
-  ...
   "foo": {
     "lizard": "Reggie 4.0"
     "bar": {
@@ -53,7 +54,9 @@ Suppose some of the logging messages produced have a json encoded format like th
 
 Will will use the `(.. | .lizard?)` operation with jq to find any logging output that contains a `lizard` field anywhere in the json hiearchy.
 
-`journalctl --boot=0 -o cat -u foobar.servcie | grep '@timestamp' | jq -M '(.. | .lizard?)' | grep -v null`
+```bash
+journalctl --boot=0 -o cat -u foobar.servcie | grep '@timestamp' | jq -M '(.. | .lizard?)' | grep -v null
+```
 
 The one caveat is I'm not yet sure how to avoid jq returning null for all the messages where there wasn't a match. That's what the trailing `| grep -v null` is for above.
 
