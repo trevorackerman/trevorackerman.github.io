@@ -1,6 +1,8 @@
-# Working with raw logging from Logstash and journalctl
-
-<br/>
+---
+layout: post
+title: Working with raw logging from Logstash and journalctl
+categories: [Troubleshooting, Linux, Java, Logstash]
+---
 
 The other day I was troubleshooting an application I contribute to that is used as a Linux startup service managed by systemd. I wanted to find logging items that matched either on their message or on their metadata.
 
