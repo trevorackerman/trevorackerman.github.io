@@ -1,6 +1,6 @@
 @import 'normalize';
-@import "solarized-dark.ss";
 @import 'variables';
+@import "solarized-dark.css";
 
 *, *::after, *::before {
   box-sizing: border-box;
@@ -109,7 +109,7 @@ table tfoot td {
 }
 
 .wrapper {
-  max-width: 1250px;
+  max-width: 1500px;
   position: relative;
 }
 
