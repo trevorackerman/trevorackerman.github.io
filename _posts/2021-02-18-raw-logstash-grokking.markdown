@@ -1,6 +1,7 @@
 ---
 layout: post
 title: Working with raw logging from Logstash and journalctl
+img: wall-of-text.png
 tags: [Troubleshooting, Linux, Java, Logstash]
 ---
 
