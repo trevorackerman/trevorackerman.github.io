@@ -1,19 +1,28 @@
 ---
 layout: post
-title: Working with raw logging from Logstash and journalctl
+title: Working with raw logging from Logstash
 img: wall-of-text.png
-tags: [Troubleshooting, Linux, Java, Logstash]
+tags: [Troubleshooting, Linux, Java, Logstash, journalctl, jq]
 ---
 
-The other day I was troubleshooting an application I contribute to that is used as a Linux startup service managed by systemd. I wanted to find logging items that matched either on their message or on their metadata.
+## Debugging JVM services without the [Elk stack](https://www.elastic.co/what-is/elk-stack)
 
-The application is JVM based and as is often the case uses Logstash and Logback to produce logs in a json format to provide metadata in addition to the message passed to the logger.
+The other day I was troubleshooting an application I contribute to written in a JVM based language that uses logstash encoded logging messages. If you're not familiar with Logstash, it is common to have it encode messages as JSON. There will be a JSON field `message` with the actual message plus other metadata stored in sibling JSON fields.
 
-_**So what was my problem, how come I didn't just use the web ui?**_
+I wanted to find logging items that matched either by the pattern of a metadata field name or within the value of the actual messages.
 
-The system I was working on doesn't have the ELK stack installed so I didn't have the typical and friendly tools to search through my logs. However, I did have access to the host running the application.
+_**So what was my problem, how come I didn't just use Kibana?**_
 
-First things first. Given that I have access to the host I should be able to access the output from the application. I know that I can use journalctl to observe what the application is writing to standard out. I also know that the tool `jq` can be used to filter and transform json. Using these two command line utilities together I'll show you how to effectively find what you are looking in json formatted logstash output.
+The system I was working on doesn't have the [ELK stack](https://www.elastic.co/what-is/elk-stack) installed so I didn't have the typical and friendly tools to search through my logs. 
+In this case it was additionally undesirable to go about installing the ELK stack.
+
+However, I did have access to the host running the application.
+
+First things first. Given that I have access to the host I should be able to access the output from the application. I also know that the command line tool [jq](https://stedolan.github.io/jq/) can be used to filter and transform JSON.
+
+The following helps are assuming that the service is controlled by systemd. With systemd you use the `journalctl` command line tool to access what services are writing to stdout. Still much of what follows is also applicable with `docker logs`, `kubectl logs`, or other platforms that will provide you with the raw logging output. The important piece is how to use any of those with [jq]() to parse through the JSON encoded logging.
+
+Using `journalctl` and `jq` together with a sprinkling of `grep` I'll show you how to effectively find what you are looking in json formatted logstash output.
 
 ## Help 1
 All the logstash encoder messages use `@timestamp`, so use `grep` to filter output from the process's stdout not produced by logging. Then use `jq` to start looking for the desired data.
